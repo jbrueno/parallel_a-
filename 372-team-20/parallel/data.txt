@@ -1,0 +1,24 @@
+SEQUENTIAL VERSION: ~15.512490 seconds
+
+PARALLEL MPI + OMP
+
+PARALLEL VERSION WITH 1 MPI PROCESSES 28 THREADS:          ~3.261995 seconds  196 moves, proc 0 finds solution
+PARALLEL VERSION WITH 2 MPI PROCESSES 28 THREADS PER PROC: ~1.240607 seconds  170 moves, proc 1 finds solution
+PARALLEL VERSION WITH 3 MPI PROCESSES 28 THREADS PER PROC: ~1.467235 seconds  224 moves, proc 2 finds solution
+
+
+PARALLEL MPI ONLY
+
+2 MPI PROCS:  0.603438 seconds   170 moves *** proc 1  found solution
+4 MPI PROCS:  0.630715 seconds   216 moves *** proc 3  found solution
+8 MPI PROCS:  0.797555 seconds   286 moves *** proc 7  found solution
+12 MPI PROCS: 0.455733 seconds   344 moves *** proc 11 found solution
+16 MPI PROCS: 0.729601 seconds   150 moves *** proc 14 found solution
+20 MPI PROCS: 0.199329 seconds   112 moves *** proc 17 found solution
+24 MPI PROCS: 0.458813 seconds   482 moves *** proc 23 found solution
+28 MPI PROCS: 0.127950 seconds   384 moves *** proc 27 found solution
+56 MPI PROCS: 0.387463 seconds   286 moves *** proc 54 found solution
+84 MPI PROCS: 0.022120 seconds   210 moves *** proc 82 found solution
+
+
+

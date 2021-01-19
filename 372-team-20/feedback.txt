@@ -1,0 +1,75 @@
+
+
+I'm a little confused about the MPI version of the algorithm. At each
+iteration of a loop, a block distribution of an array (actually, a
+linked list) open_list is performed. But as far as I can tell, there
+is no reason why open_list should be the same on every proc, since
+each proc is modifying open_list in a (possibly) different way in each
+iteration. There isn't even a reason why open_list should have the
+same length on every proc. So it isn't really a block distribution. It
+isn't clear that any process would follow the same path as in the
+sequential version. Why not just have each process choose some subset
+of the open_list randomly? Nevertheless, it seems to work in that it
+finds a right answer and seems to get faster.
+
+Good job making and including the graphs. It's a little unconventional
+to do curve fitting with such data but not a big deal.
+
+Good job writing Bridges batch scripts and esp. using multiple nodes.
+
+A test is hardcoded into the main function.  Better to make
+this an input, or make it random.
+
+A note about the experiments: with a search algorithm, a lot can
+depend on getting lucky. So your huge super-linear speedup at
+nprocs=84 might just be because one proc got lucky and found the
+solution on the first path it explored. To really evaluate the
+performance, you should run tests on many different inputs and
+average, instead of just using the one input you hard coded into main.
+Second, you really need to do a bigger problem that takes longer to
+get accurate timing measurements (5x5 instead of 4x4?).
+
+
+Obviously the need to un/comment code to use or not use OpenMP is
+sub-optimal. And there is no need for it! You included omp.h, but
+didn't have to, because you never call an OpenMP function. And if you
+do call an OpenMP function, you can use the preprocessor to only
+include omp.h if there is OpenMP support. The compiler will ignore the
+omp pragmas unless you use -fopenmp. That is the way you are supposed
+to role to have one program that can be compiled as a sequential or
+OpenMP program without having to modify the code.
+
+The problem with the termination protocol is that you are using
+MPI_Bcast, which requires that you know which proc found the solution
+ahead of time. Instead you could have used something like
+MPI_Allreduce with the MAX operator. If the max is 0, the solution was
+not found, otherwise it was found, and everyone quits. Too bad you
+didn't ask us for help with that!
+
+
+
+This is not a correct use of OpenMP.   You haven't declared
+which variables are private or shared.  If sum is shared, you have
+a data race.  If sum is private, you don't modify the original
+sum and the function will return 0.    You should have made sum
+shared and used the reduction(+:sum) clause.
+
+	//#pragma omp parallel for
+	for(int i = 0; i < ROWS; i++){
+		for(int j = 0; j < COLS; j++){
+			int value = brd->board[i][j];
+			if(value != 0){
+				int goal_x = value / ROWS;
+				int goal_y = value % COLS;
+				int dx = i - goal_x;
+				int dy = j - goal_y;
+				sum += (abs(dx) + abs(dy));
+			}
+		}
+	}
+
+Again, an incorrect usage of OpenMP in function possible_actions.
+The data race this time is on poss_actions[index] and index.
+
+
+Score: 80
