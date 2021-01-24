@@ -5,21 +5,12 @@
 #include <time.h>
 #include <mpi.h>
 #include <limits.h>
-//#include <omp.h>.  // all omp constructs are commented out to enable execution on my machine
-
 
 #define ROWS 4                 // rows in the 4x4 grid representing the puzzle
 #define COLS 4                 // columns in the 4x4 grid representing the puzzle
 int nprocs, rank;              // number of processes and rank of the proc
 int initial_arr_size = 15000;  // initial size of the arrays allocated in the A* search
 double start;                  // time A* seach begins
-
-
-/*************CHANGE DEPENDING ON # OF PROCS**************/
-/*the proc that finds the solution first can be found in data.txt*/
-int first_proc_finished = 1;
-/******************************************/
-
 
 typedef struct Board           // struct to hold a board and its associated values
 {
@@ -522,14 +513,14 @@ int find_parents(Board* brd){
  * in the result() function.  Return ) if a solution was found 
  * and -1 otherwise.  Algorithm is described further in the README file */
 int a_star_search(Board* start, Board* goal, int rank, int nprocs){
-	int solution_found = 0;                 // set to 0 meaning no solution has been found, is updated to 1 when a solution is found
+	int solution_found = 0;                 // set to 0 meaning no solution has been found, updated to 1 when a solution is found
 	int iters = 1;                          // holds count of loop iterations which equals the number of explored states
+	int checker = 0;                        // used with MPI_Allreduce to check if any proc found the solution
 	LinkedList* closed_list = make_list();  // list to hold boards that have already been explored
 	LinkedList* open_list = make_list();    // list to hold boards that have yet to be explored
 	Node* first = make_node(start);         // first board to explore, the given 'start' board
 	first->board->h_score = manhattan_distance(first->board); // set initial h_score
 	push(open_list, first);                 // add initial board to open list
-
 
 	if(compare_boards(start->board, goal->board) == 0){ // check if given node is equal to goal
 		printf("---SOLUTION FOUND---\n");
@@ -568,21 +559,19 @@ int a_star_search(Board* start, Board* goal, int rank, int nprocs){
 			printf("EXPLORED %d STATES\n", closed_list->size);
 			printf("---------------------------\n");
 			printf("\n----------SOLUTION FOUND-----------\n");
-			printf("--proc %d found solution--\n", rank);
-			printf("--rank: %d    open_list size: %d.  start value: %d    stop value: %d--\n", rank, open_list->size, first, stop);
 			solution_found = 1;
 		}
-		MPI_Bcast(&solution_found, 1, MPI_INT, first_proc_finished, MPI_COMM_WORLD); // need to broadcast from first proc to find solution
 
-		LinkedList* check_list = expand(current->board); // list of boards resulting from expand(), need to check if they have been explored or not
-		Node* check = check_list->head;
+		MPI_Allreduce(&solution_found, &checker, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD); // checks if solution was found by any proc
 
-		if(solution_found == 1){    // if a proc has found a solution, free memory and go to return 0
-			free_list(check_list);
+		if(checker > 0){ // exit the function bc solution was found
 			free_list(closed_list);
 			free_list(open_list);
 			return 0;
 		}
+
+		LinkedList* check_list = expand(current->board); // list of boards resulting from expand(), need to check if they have been explored or not
+		Node* check = check_list->head;
 
 		while(check != NULL){
 			Node *copy;
@@ -601,7 +590,6 @@ int a_star_search(Board* start, Board* goal, int rank, int nprocs){
 					}
 					tmp = tmp->next;
 				}
-				//if(tmp->board->h_score > copy->board->h_score){ // if existing board has a worse h value, update it
 				if(find_parents(tmp->board) > find_parents(copy->board)){
 					tmp->board->parent = copy->board->parent;
 					tmp->board->h_score = copy->board->h_score;
@@ -617,8 +605,7 @@ int a_star_search(Board* start, Board* goal, int rank, int nprocs){
 		} // while
 		iters++;
 	} // while
-
-	return -1;
+	return -1; // no solution was found
 }
 
 /* Starts the timer once all procs have reached the barrier.
@@ -635,7 +622,7 @@ static void setup(){
  * The final time is printed here. */
 static void teardown(){
   MPI_Barrier(MPI_COMM_WORLD); // for timing
-  if(rank == first_proc_finished){
+  if(rank == 0){
     printf("\nTotal Time: %f seconds\n\n", MPI_Wtime() - start);
   } 
 }
@@ -693,7 +680,6 @@ int main(int argc, char* argv[]){
 
 	teardown();
 	MPI_Finalize();
-
 
 	destroy_board(GOAL);
 }
