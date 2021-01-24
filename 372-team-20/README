@@ -80,21 +80,13 @@ is equal to the GOAL board.
 In order to parallelize my algorithm, I decided that each MPI process will receive a 
 different portion of the open list to check.  The parallelization begins once the open
 list is big enough for each process to check at least 2 boards.  
-A big challenge arose in this parallel version which is that it will continue to run unless 
-all of the MPI processes receive an alert of some kind once one of the procs has found a solution.
-I was not able to solve this issue and I had to manually examine which process would find
-the solution first. Everytime a different number of processes was run on the program,
-the value of the int 'first_proc_finished' (found at the top of the code between two lines 
-of asterisks) had to be changed to the proc number that will find the solution first.
-In the data.txt file at the end of each line describing the parallel run is the number
-of the proc that found the solution (ex: 'proc 11 found solution').
 
 The input board I used in the sequential version and all of the parallel tests (TEST) can be 
 solved in a MINIMUM of 80 moves.  80 moves is the highest number of moves required to solve 
 any solvable 15-puzzle instance.
 
 
-How to compile run the code:
+How to compile and run the code:
 
 Sequential: astar.c
     I compiled this every time using the following:
@@ -108,46 +100,13 @@ Sequential: astar.c
 
 Parallel: mpi_threads_astar.c
 
-	**********************************************************************************************************************
-	VALUE OF 'first_proc_finished'(LINE 20) MUST BE CHANGED BEFORE COMPILING FOR EACH RUN WITH A DIFFERENT # OF MPI PROCS
-	------- the value to change it to can be found at the end of this file or at the end of each line in data.txt --------
-	**********************************************************************************************************************
+	I used the Makefile to compile this program each time.
 
-	I used the Makefile to compile this program each time.  It must be
-	updated depending on whether or not openmp is being used.
-
-
-    for MPI only compile with the following
+    for MPI compile with the following
 
         mpicc -o mpi_threads_astar.exec mpi_threads_astar.c
 
-    run on Bridges with any of the following batch scripts:
+    run on Bridges Supercomputer with any of the following batch scripts:
         run2.sh, run4.sh, run8.sh, run12.sh, run16.sh, run20.sh,
         run24.sh, run28.sh, run56.sh, or run84.sh
     (on my 2 core macbook, I ran the program with: mpirun -np 2 ./mpi_threads_astar.exec)
-
-
-    for MPI + OpenMP compile with the following:
-
-    mpicc -fopenmp -o mpi_threads_astar.exec mpi_threads_astar.c
-
-	TO RUN: UNCOMMENT LINES 8, 286, 377, 405, and 454
-    run on bridges with batch scripts 1proc_omp.out, 2procs_omp.out, or 3procs_omp.out
-
-
-
-
-VALUE OF 'first_proc_finished' FOR EACH OF THE FOLLOWING NUMBER OF MPI PROCS
-
-1 PROC:    0
-2 PROCS:   1
-3 PROCS:   2
-4 PROCS:   3
-8 PROCS:   7
-12 PROCS:  11
-16 PROCS:  14
-20 PROCS:  17
-24 PROCS:  23
-28 PROCS:  27
-56 PROCS:  54
-84 PROCS:  82
